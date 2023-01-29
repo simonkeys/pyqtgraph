@@ -20,7 +20,7 @@ class AxisItem(GraphicsWidget):
     If maxTickLength is negative, ticks point into the plot.
     """
 
-    def __init__(self, orientation, pen=None, textPen=None, tickPen = None, linkView=None, parent=None, maxTickLength=-5, showValues=True, text='', units='', unitPrefix='', **args):
+    def __init__(self, orientation, pen=None, textPen=None, tickPen=None, linkView=None, parent=None, maxTickLength=-5, showValues=True, text='', units='', unitPrefix='', fixedSize=None, **args):
         """
         =============== ===============================================================
         **Arguments:**
@@ -82,6 +82,11 @@ class AxisItem(GraphicsWidget):
         # indefinitely.
         self.fixedWidth = None
         self.fixedHeight = None
+        if fixedSize and showValues:
+            if self.orientation in ('left','right'):
+                self.fixedWidth = fixedSize
+            elif self.orientation in ('top', 'bottom'):
+                self.fixedHeight = fixedSize
 
         self.labelText = text
         self.labelUnits = units

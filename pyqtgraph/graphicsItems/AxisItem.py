@@ -20,7 +20,54 @@ class AxisItem(GraphicsWidget):
     If maxTickLength is negative, ticks point into the plot.
     """
 
-    def __init__(self, orientation, pen=None, textPen=None, tickPen=None, linkView=None, parent=None, maxTickLength=-5, showValues=True, text='', units='', unitPrefix='', fixedSize=None, **args):
+    defaultStyle = {
+        'tickTextOffset': [5, 2],  ## (horizontal, vertical) spacing between text and axis
+        'tickTextWidth': 30,  ## space reserved for tick text
+        'tickTextHeight': 18,
+        'autoExpandTextSpace': True,  ## automatically expand text space if needed
+        'autoReduceTextSpace': True,
+        'hideOverlappingLabels': True,
+        'tickFont': None,
+        'stopAxisAtTick': (False, False),  ## whether axis is drawn to edge of box or to last tick
+        'textFillLimits': [  ## how much of the axis to fill up with tick text, maximally.
+            (0, 0.8),    ## never fill more than 80% of the axis
+            (2, 0.6),    ## If we already have 2 ticks with text, fill no more than 60% of the axis
+            (4, 0.4),    ## If we already have 4 ticks with text, fill no more than 40% of the axis
+            (6, 0.2),    ## If we already have 6 ticks with text, fill no more than 20% of the axis
+            ],
+        'showValues': True,
+        'tickLength': -5,
+        'maxTickLevel': 2,
+        'maxTextLevel': 2,
+        'tickAlpha': None,  ## If not none, use this alpha for all ticks.
+    }
+
+    style = {
+        'tickTextOffset': [5, 2],  ## (horizontal, vertical) spacing between text and axis
+        'tickTextWidth': 30,  ## space reserved for tick text
+        'tickTextHeight': 18,
+        'autoExpandTextSpace': True,  ## automatically expand text space if needed
+        'autoReduceTextSpace': True,
+        'hideOverlappingLabels': True,
+        'tickFont': None,
+        'stopAxisAtTick': (False, False),  ## whether axis is drawn to edge of box or to last tick
+        'textFillLimits': [  ## how much of the axis to fill up with tick text, maximally.
+            (0, 0.8),    ## never fill more than 80% of the axis
+            (2, 0.6),    ## If we already have 2 ticks with text, fill no more than 60% of the axis
+            (4, 0.4),    ## If we already have 4 ticks with text, fill no more than 40% of the axis
+            (6, 0.2),    ## If we already have 6 ticks with text, fill no more than 20% of the axis
+            ],
+        'showValues': True,
+        'tickLength': -5,
+        'maxTickLevel': 2,
+        'maxTextLevel': 2,
+        'tickAlpha': None,  ## If not none, use this alpha for all ticks.
+    }
+
+    def __init__(self, orientation, pen=None, textPen=None, tickPen=None, linkView=None, parent=None, maxTickLength=-5, showValues=True, 
+                text='', units='', unitPrefix='', fixedSize=None, tickTextOffset=None, tickTextWidth=None, tickTextHeight=None, autoExpandTextSpace=None,
+                autoReduceTextSpace=None, hideOverlappingLabels=None, tickFont=None, stopAxisAtTick=None, textFillLimits=None, maxTickLevel=None, 
+                maxTextLevel=None, tickAlpha=None, **args):
         """
         =============== ===============================================================
         **Arguments:**
@@ -45,6 +92,13 @@ class AxisItem(GraphicsWidget):
         """
 
         GraphicsWidget.__init__(self, parent)
+        self.style = AxisItem.style.copy()
+        for k, v in locals().items():
+            if k in self.style and v is not None:
+                self.style.update({k: v})
+        if maxTickLength is not None:
+            self.style.update(tickLength=maxTickLength)
+
         self.label = QtWidgets.QGraphicsTextItem(self)
         self.picture = None
         self.orientation = orientation
@@ -52,28 +106,6 @@ class AxisItem(GraphicsWidget):
             raise Exception("Orientation argument must be one of 'left', 'right', 'top', or 'bottom'.")
         if orientation in ['left', 'right']:
             self.label.setRotation(-90)
-
-        self.style = {
-            'tickTextOffset': [5, 2],  ## (horizontal, vertical) spacing between text and axis
-            'tickTextWidth': 30,  ## space reserved for tick text
-            'tickTextHeight': 18,
-            'autoExpandTextSpace': True,  ## automatically expand text space if needed
-            'autoReduceTextSpace': True,
-            'hideOverlappingLabels': True,
-            'tickFont': None,
-            'stopAxisAtTick': (False, False),  ## whether axis is drawn to edge of box or to last tick
-            'textFillLimits': [  ## how much of the axis to fill up with tick text, maximally.
-                (0, 0.8),    ## never fill more than 80% of the axis
-                (2, 0.6),    ## If we already have 2 ticks with text, fill no more than 60% of the axis
-                (4, 0.4),    ## If we already have 4 ticks with text, fill no more than 40% of the axis
-                (6, 0.2),    ## If we already have 6 ticks with text, fill no more than 20% of the axis
-                ],
-            'showValues': showValues,
-            'tickLength': maxTickLength,
-            'maxTickLevel': 2,
-            'maxTextLevel': 2,
-            'tickAlpha': None,  ## If not none, use this alpha for all ticks.
-        }
 
         self.textWidth = 30  ## Keeps track of maximum width / height of tick text
         self.textHeight = 18
@@ -124,7 +156,7 @@ class AxisItem(GraphicsWidget):
             self._linkToView_internal(linkView)
 
         self.grid = False
-        
+        self.showLabel(bool(self.labelText))
         #self.setCacheMode(self.DeviceCoordinateCache)
 
     def setStyle(self, **kwds):

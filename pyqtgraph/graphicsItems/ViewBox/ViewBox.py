@@ -89,7 +89,7 @@ class ViewBox(GraphicsWidget):
 
     sigYRangeChanged = QtCore.Signal(object, object)
     sigXRangeChanged = QtCore.Signal(object, object)
-    sigRangeChangedManually = QtCore.Signal(object)
+    sigRangeChangedManually = QtCore.Signal(object, object, object)
     sigRangeChanged = QtCore.Signal(object, object, object)
     sigStateChanged = QtCore.Signal(object)
     sigTransformChanged = QtCore.Signal(object)
@@ -1289,7 +1289,7 @@ class ViewBox(GraphicsWidget):
         self._resetTarget()
         self.scaleBy(s, center)
         ev.accept()
-        self.sigRangeChangedManually.emit(mask)
+        self.sigRangeChangedManually.emit(self, self.viewRange, mask)
 
     def mouseClickEvent(self, ev):
         if ev.button() == QtCore.Qt.MouseButton.RightButton and self.menuEnabled():
@@ -1348,7 +1348,7 @@ class ViewBox(GraphicsWidget):
                 self._resetTarget()
                 if x is not None or y is not None:
                     self.translateBy(x=x, y=y)
-                self.sigRangeChangedManually.emit(self.state['mouseEnabled'])
+                self.sigRangeChangedManually.emit(self, self.viewRange(), self.state['mouseEnabled'])
         elif ev.button() & QtCore.Qt.MouseButton.RightButton:
             #print "vb.rightDrag"
             if self.state['aspectLocked'] is not False:
@@ -1368,7 +1368,7 @@ class ViewBox(GraphicsWidget):
             center = Point(tr.map(ev.buttonDownPos(QtCore.Qt.MouseButton.RightButton)))
             self._resetTarget()
             self.scaleBy(x=x, y=y, center=center)
-            self.sigRangeChangedManually.emit(self.state['mouseEnabled'])
+            self.sigRangeChangedManually.emit(self, self.viewRange(), self.state['mouseEnabled'])
 
     def keyPressEvent(self, ev):
         """
@@ -1411,7 +1411,7 @@ class ViewBox(GraphicsWidget):
         Passes keyword arguments to setRange
         """
         self.setRange(ax.normalized(), **kwargs) # be sure w, h are correct coordinates
-        self.sigRangeChangedManually.emit(self.state['mouseEnabled'])
+        self.sigRangeChangedManually.emit(self, self.viewRange(), self.state['mouseEnabled'])
 
     def allChildren(self, item=None):
         """Return a list of all children and grandchildren of this ViewBox"""

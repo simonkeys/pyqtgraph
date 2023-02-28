@@ -368,6 +368,9 @@ class AxisItem(GraphicsWidget):
         self.labelText = text or ""
         self.labelUnits = units or ""
         self.labelUnitPrefix = unitPrefix or ""
+        if type(self.labelUnits).__name__ == "Unit":
+            self.labelUnitPrefix = ""
+            self.autoSIPrefixScale = 1.0
         if len(args) > 0:
             self.labelStyle = args
         # Account empty string and `None` for units and text
@@ -579,19 +582,22 @@ class AxisItem(GraphicsWidget):
 
     def updateAutoSIPrefix(self):
         if self.label.isVisible():
-            if self.logMode:
-                _range = 10**np.array(self.range)
+            _range = 10**np.array(self.range) if self.logMode else self.range
+            range_max = np.max(np.abs(_range)) * self.scale
+            if type(self.labelUnits).__name__ == "Unit":
+                range_max *= self.autoSIPrefixScale * self.labelUnits
+                compact_range_max = range_max.to_compact()
+                self.autoSIPrefixScale *= compact_range_max.magnitude/range_max.magnitude
+                self.labelUnits = compact_range_max.units
             else:
-                _range = self.range
-            (scale, prefix) = fn.siScale(max(abs(_range[0]*self.scale), abs(_range[1]*self.scale)))
-            if self.labelUnits == '' and prefix in ['k', 'm']:  ## If we are not showing units, wait until 1e6 before scaling.
-                scale = 1.0
-                prefix = ''
-            self.autoSIPrefixScale = scale
-            self.labelUnitPrefix = prefix
+                (scale, prefix) = fn.siScale(range_max)
+                if self.labelUnits == '' and prefix in ['k', 'm']:  ## If we are not showing units, wait until 1e6 before scaling.
+                    scale = 1.0
+                    prefix = ''
+                self.autoSIPrefixScale = scale
+                self.labelUnitPrefix = prefix
         else:
             self.autoSIPrefixScale = 1.0
-
         self._updateLabel()
 
     def setRange(self, mn, mx):

@@ -39,16 +39,16 @@ _have_native_drawlines_array = Qt.QT_LIB.startswith('PySide') and have_native_dr
 
 class LineSegments:
     def __init__(self):
-        method = None
+        use_array = None
 
         # "use_native_drawlines" is pending the following issue and code review
         # https://bugreports.qt.io/projects/PYSIDE/issues/PYSIDE-1924
         # https://codereview.qt-project.org/c/pyside/pyside-setup/+/415702
         self.use_native_drawlines = Qt.QT_LIB.startswith('PySide') and _have_native_drawlines_array
         if self.use_native_drawlines:
-            method = True
+            use_array = True
 
-        self.array = Qt.internals.PrimitiveArray(QtCore.QLineF, 4, method=method)
+        self.array = Qt.internals.PrimitiveArray(QtCore.QLineF, 4, use_array=use_array)
 
     def get(self, size):
         self.array.resize(size)
@@ -266,6 +266,8 @@ class PlotCurveItem(GraphicsObject):
         ## If an orthogonal range is specified, mask the data now
         if orthoRange is not None:
             mask = (d2 >= orthoRange[0]) * (d2 <= orthoRange[1])
+            if self.opts.get("stepMode", None) == "center":
+                mask = mask[:-1]  # len(y) == len(x) - 1 when stepMode is center
             d = d[mask]
             #d2 = d2[mask]
 
